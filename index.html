@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>For Aya — Open when...</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%238b1a2b'/><text x='20' y='42' font-family='Georgia,serif' font-style='italic' font-size='28' fill='%23f1e3c5' text-anchor='middle'>V</text><text x='44' y='42' font-family='Georgia,serif' font-style='italic' font-size='28' fill='%23f1e3c5' text-anchor='middle'>A</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -58,7 +59,40 @@ body::after {
   position: fixed; inset: 0;
   background: radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.45) 75%, rgba(0,0,0,0.88) 100%);
   pointer-events: none;
+  z-index: 3;
+}
+
+/* ============================================================
+   HEARTS BACKGROUND LAYER
+   ============================================================ */
+.hearts-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
   z-index: 2;
+  overflow: hidden;
+}
+
+.heart-static,
+.heart-floating {
+  position: absolute;
+  display: block;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='%23b22838'><path d='M50,84 C50,84 14,60 14,32 C14,20 23,12 34,12 C41,12 47,16 50,22 C53,16 59,12 66,12 C77,12 86,20 86,32 C86,60 50,84 50,84 Z'/></svg>");
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+
+.heart-floating {
+  bottom: -50px;
+  opacity: 0;
+  animation: heartFloat linear infinite;
+}
+
+@keyframes heartFloat {
+  0%   { transform: translateY(0) translateX(0) rotate(-6deg); opacity: 0; }
+  12%  { opacity: 0.18; }
+  85%  { opacity: 0.18; }
+  100% { transform: translateY(-110vh) translateX(40px) rotate(14deg); opacity: 0; }
 }
 
 /* ============================================================
@@ -66,7 +100,7 @@ body::after {
    ============================================================ */
 .header {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   text-align: center;
   margin-bottom: 70px;
   opacity: 0;
@@ -126,7 +160,7 @@ body::after {
    ============================================================ */
 .desk {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   max-width: 1240px;
   margin: 0 auto;
   display: grid;
@@ -470,6 +504,35 @@ body::after {
   font-style: italic;
 }
 
+/* Poem quote inside a letter */
+.letter-body blockquote.poem {
+  border-left: 2px solid var(--wax-dark);
+  padding: 6px 0 6px 24px;
+  margin: 24px 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1.65;
+  color: var(--ink);
+  opacity: 0.95;
+}
+
+.letter-body blockquote.poem cite {
+  display: block;
+  font-family: 'Caveat', cursive;
+  font-style: normal;
+  font-size: 17px;
+  color: var(--wax-dark);
+  opacity: 0.72;
+  margin-top: 14px;
+  letter-spacing: 0.3px;
+}
+
+.letter-body blockquote.poem cite em {
+  font-style: italic;
+  color: var(--wax-dark);
+}
+
 /* Place for photo/gif */
 .letter-photo {
   margin: 35px auto;
@@ -565,7 +628,7 @@ body::after {
    ============================================================ */
 .footer {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   text-align: center;
   margin-top: 100px;
   padding: 24px;
@@ -633,6 +696,9 @@ body::after {
 </head>
 <body>
 
+<!-- Hearts background layer (populated by JS) -->
+<div class="hearts-bg" id="heartsBg"></div>
+
 <!-- ============================================================
      HEADER — edit the title if you want
      ============================================================ -->
@@ -697,29 +763,36 @@ const letters = [
     label: "you're sad",
     title: "When you're sad",
     body: `
-      <p>Aya, if tears are falling right now — I need you to know one thing: <em>you are not alone in this</em>. Even when I'm not beside you, my heart is. Always.</p>
-      <p>Sadness is just love with nowhere to go. So I'm leaving mine here — so you have somewhere to send it back.</p>
-      <p>Breathe deeply. I'm here. And I will be.</p>
+      <blockquote class="poem">
+        You do not have to be good.<br>
+        You do not have to walk on your knees<br>
+        for a hundred miles through the desert, repenting.<br>
+        You only have to let the soft animal of your body<br>
+        love what it loves.
+      </blockquote>
     `,
-    photo: "Cat%20Love%20Sticker%20by%20MYAOWL.gif"
+    photo: null
   },
   {
     label: "you miss me",
     title: "When you miss me",
     body: `
-      <p>If you miss me — know that <em>I miss you too</em>. Constantly. Morning, evening, between the sentences I write to someone else.</p>
-      <p>Imagine I'm standing behind you, arms around your waist, my chin on your shoulder. Close your eyes. Feel it.</p>
-      <p>The distance between us is just a number. You are <em>home</em>, wherever I am.</p>
+      <blockquote class="poem">
+        I do not love you as if you were salt-rose, or topaz,<br>
+        or the arrow of carnations the fire shoots off.<br>
+        I love you as certain dark things are to be loved,<br>
+        in secret, between the shadow and the soul.
+      </blockquote>
     `,
-    photo: "Cat%20Love%20Sticker%20by%20MYAOWL-2.gif"
+    photo: null
   },
   {
     label: "you're bored",
     title: "When you're bored",
     body: `
-      <p>Bored? Good. That means you have a moment for a small adventure.</p>
-      <p>Suggestions from me: <em>cook something you've never tried. Dance in the kitchen. Send me three words and nothing more.</em></p>
-      <p>Or just sit with this photo and imagine what we'll do together when we see each other again. I already have a list.</p>
+      <blockquote class="poem">
+        Listen; there's a hell<br>of a good universe next door; let's go.
+      </blockquote>
     `,
     photo: "Cat%20Sticker%20by%20MYAOWL.gif"
   },
@@ -727,29 +800,194 @@ const letters = [
     label: "you're having a bad day",
     title: "When you're having a bad day",
     body: `
-      <p>Bad days are like storms — loud, wet, unfair. But they pass. They always pass.</p>
-      <p>You don't have to be strong. You don't have to smile. You're allowed to be tired, angry, broken. <em>I love you in every state.</em></p>
-      <p>Shower. Water. Something warm. And remember — tomorrow is a new page, and I'll write it with you.</p>
+      <blockquote class="poem">
+        Let everything happen to you: beauty and terror.<br>
+        Just keep going. No feeling is final.
+      </blockquote>
     `,
-    photo: "Cat%20Love%20Sticker%20by%20MYAOWL-3.gif"
+    photo: null
   },
   {
     label: "you're angry with me",
     title: "When you're angry with me",
     body: `
-      <p>Did I deserve it? Probably yes. And I'm sorry — honestly, not just out of politeness.</p>
-      <p>Be angry. You have every right. But please — <em>don't run</em>. Tell me what I did wrong, and I'll fix it. Even if it takes a lifetime.</p>
-      <p>I love you even when you don't love me back. That's the most honest version of love I know.</p>
+      <blockquote class="poem">
+        Out beyond ideas of wrongdoing and rightdoing,<br>
+        there is a field. I'll meet you there.<br>
+        When the soul lies down in that grass,<br>
+        the world is too full to talk about.
+      </blockquote>
     `,
-    photo: "Cat%20Sticker%20by%20MYAOWL-2.gif"
+    photo: null
   },
   {
     label: "you can't sleep",
     title: "When you can't sleep",
     body: `
-      <p>3 a.m.? Say hello to the dark for me. I've been there often — thinking about you.</p>
-      <p>Breathe deeply. Imagine me drawing small circles on your back with my finger, whispering that everything is okay.</p>
-      <p>Sleep will come. It always comes. And I'll be in your dreams, if you let me in. <em>Goodnight, my love.</em></p>
+      <blockquote class="poem">
+        Had I the heavens' embroidered cloths,<br>
+        Enwrought with golden and silver light,<br>
+        The blue and the dim and the dark cloths<br>
+        Of night and light and the half-light,<br>
+        I would spread the cloths under your feet:<br>
+        But I, being poor, have only my dreams;<br>
+        I have spread my dreams under your feet;<br>
+        Tread softly because you tread on my dreams.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you forgot how beautiful you are",
+    title: "When you forgot how beautiful you are",
+    body: `
+      <blockquote class="poem">
+        She walks in beauty, like the night<br>
+        Of cloudless climes and starry skies;<br>
+        And all that's best of dark and bright<br>
+        Meet in her aspect and her eyes.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you doubt my love",
+    title: "When you doubt my love",
+    body: `
+      <blockquote class="poem">
+        How do I love thee? Let me count the ways.<br>
+        I love thee to the depth and breadth and height<br>
+        My soul can reach, when feeling out of sight<br>
+        For the ends of being and ideal grace.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you want to feel close to me",
+    title: "When you want to feel close to me",
+    body: `
+      <blockquote class="poem">
+        i carry your heart with me (i carry it in<br>
+        my heart) i am never without it (anywhere<br>
+        i go you go, my dear; and whatever is done<br>
+        by only me is your doing, my darling)
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "the world feels too big",
+    title: "When the world feels too big",
+    body: `
+      <blockquote class="poem">
+        Perhaps all the dragons in our lives are princesses<br>
+        who are only waiting to see us act, just once,<br>
+        with beauty and courage. Perhaps everything that<br>
+        frightens us is, in its deepest essence,<br>
+        something helpless that wants our love.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you need courage",
+    title: "When you need courage",
+    body: `
+      <blockquote class="poem">
+        One day you finally knew<br>
+        what you had to do, and began,<br>
+        though the voices around you<br>
+        kept shouting their bad advice —<br>
+        though the whole house<br>
+        began to tremble<br>
+        and you felt the old tug<br>
+        at your ankles.<br>
+        "Mend my life!"<br>
+        each voice cried.<br>
+        But you didn't stop.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you crave me",
+    title: "When you crave me",
+    body: `
+      <blockquote class="poem">
+        I crave your mouth, your voice, your hair.<br>
+        Silent and starving, I prowl through the streets.<br>
+        Bread does not nourish me, dawn disrupts me, all day<br>
+        I hunt for the liquid measure of your steps.<br>
+        I hunger for your sleek laugh,<br>
+        your hands the color of a savage harvest,<br>
+        hunger for the pale stones of your fingernails,<br>
+        I want to eat your skin like a whole almond.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you feel small",
+    title: "When you feel small",
+    body: `
+      <blockquote class="poem">
+        Even after all this time<br>
+        the sun never says to the earth,<br>
+        "You owe me."<br>
+        Look what happens<br>
+        with a love like that.<br>
+        It lights the whole sky.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "the night is too long",
+    title: "When the night is too long",
+    body: `
+      <blockquote class="poem">
+        Bright star, would I were stedfast as thou art —<br>
+        Not in lone splendour hung aloft the night<br>
+        And watching, with eternal lids apart,<br>
+        Like nature's patient, sleepless Eremite,<br>
+        The moving waters at their priestlike task<br>
+        Of pure ablution round earth's human shores.
+      </blockquote>
+    `,
+    photo: null
+  },
+  {
+    label: "you want to be wanted",
+    title: "When you want to be wanted",
+    body: `
+      <blockquote class="poem">
+        Wild nights — Wild nights!<br>
+        Were I with thee<br>
+        Wild nights should be<br>
+        Our luxury!<br><br>
+        Futile — the winds —<br>
+        To a Heart in port —<br>
+        Done with the Compass —<br>
+        Done with the Chart!
+      </blockquote>
+    `,
+    photo: "Cat%20Sticker%20by%20MYAOWL-2.gif"
+  },
+  {
+    label: "you remember our beginning",
+    title: "When you remember our beginning",
+    body: `
+      <blockquote class="poem">
+        O my Luve is like a red, red rose<br>
+        That's newly sprung in June;<br>
+        O my Luve is like the melody<br>
+        That's sweetly played in tune.<br><br>
+        So fair art thou, my bonnie lass,<br>
+        So deep in luve am I;<br>
+        And I will luve thee still, my dear,<br>
+        Till a' the seas gang dry.
+      </blockquote>
     `,
     photo: "Cat%20Love%20Sticker%20by%20MYAOWL-4.gif"
   }
@@ -819,9 +1057,11 @@ function openLetter(idx, envEl) {
     if (data.photo) {
       letterPhoto.innerHTML = `<img src="${data.photo}" alt="">`;
       letterPhoto.classList.add('has-gif');
+      letterPhoto.style.display = '';
     } else {
-      letterPhoto.innerHTML = `<span>· photo or gif goes here ·</span>`;
+      letterPhoto.innerHTML = '';
       letterPhoto.classList.remove('has-gif');
+      letterPhoto.style.display = 'none';
     }
 
     overlay.classList.add('active');
@@ -849,6 +1089,38 @@ overlay.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeLetter();
 });
+
+/* ============================================================
+   HEARTS — scattered + gently floating
+   ============================================================ */
+const heartsBg = document.getElementById('heartsBg');
+
+// scattered static hearts (watermark-like)
+for (let i = 0; i < 32; i++) {
+  const h = document.createElement('span');
+  h.className = 'heart-static';
+  const size = 12 + Math.random() * 30;
+  h.style.left = `${Math.random() * 100}%`;
+  h.style.top = `${Math.random() * 100}%`;
+  h.style.width = `${size}px`;
+  h.style.height = `${size}px`;
+  h.style.transform = `rotate(${(Math.random() - 0.5) * 30}deg)`;
+  h.style.opacity = (0.04 + Math.random() * 0.06).toFixed(3);
+  heartsBg.appendChild(h);
+}
+
+// slowly floating hearts (rising like embers)
+for (let i = 0; i < 8; i++) {
+  const h = document.createElement('span');
+  h.className = 'heart-floating';
+  const size = 14 + Math.random() * 16;
+  h.style.left = `${Math.random() * 100}%`;
+  h.style.width = `${size}px`;
+  h.style.height = `${size}px`;
+  h.style.animationDuration = `${22 + Math.random() * 16}s`;
+  h.style.animationDelay = `${(Math.random() * -25).toFixed(1)}s`;
+  heartsBg.appendChild(h);
+}
 </script>
 </body>
 </html>

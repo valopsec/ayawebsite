@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>For Aya — Open when...</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PALETTE — deep wine + cream paper
+   ============================================================ */
+:root {
+  --wine-deep:    #14060a;
+  --wine:         #2a0a14;
+  --wine-mid:     #4a1224;
+  --wax:          #8b1a2b;
+  --wax-dark:     #6e1422;
+  --wax-light:    #b22838;
+  --cream:        #eee0c0;
+  --cream-light:  #f7ecce;
+  --cream-shadow: #d4c39c;
+  --ink:          #2b0a10;
+  --ink-soft:     #5a1c24;
+  --gold:         #9a7a3c;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { min-height: 100%; }
+
+body {
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--cream);
+  background:
+    radial-gradient(ellipse at 50% 30%, #5a1426 0%, #2a0810 55%, #120407 100%);
+  position: relative;
+  min-height: 100vh;
+  padding: 70px 24px 100px;
+  overflow-x: hidden;
+}
+
+/* Soft grain over everything */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.06 0 0 0 0 0.02 0 0 0 0 0.03 0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.55;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Vignette */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.45) 75%, rgba(0,0,0,0.88) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.header {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  margin-bottom: 70px;
+  opacity: 0;
+  animation: fadeIn 1.6s ease-out 0.2s forwards;
+}
+
+.ornament {
+  font-family: 'Cormorant Garamond', serif;
+  color: var(--gold);
+  letter-spacing: 14px;
+  font-size: 13px;
+  margin-bottom: 22px;
+  opacity: 0.75;
+  padding-left: 14px;
+}
+
+.header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(40px, 6.5vw, 72px);
+  color: var(--cream-light);
+  line-height: 1.05;
+  letter-spacing: 0.5px;
+}
+
+.header h1 .name {
+  font-family: 'Caveat', cursive;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--wax-light);
+  font-size: 1.1em;
+  margin-left: 6px;
+}
+
+.header .sub {
+  font-family: 'Caveat', cursive;
+  margin-top: 18px;
+  color: var(--cream);
+  opacity: 0.65;
+  font-size: 24px;
+  letter-spacing: 0.5px;
+}
+
+.header .divider {
+  display: inline-block;
+  width: 60px;
+  height: 1px;
+  background: var(--gold);
+  opacity: 0.4;
+  vertical-align: middle;
+  margin: 0 12px 6px;
+}
+
+/* ============================================================
+   DESK — envelopes scattered like letters on a table
+   ============================================================ */
+.desk {
+  position: relative;
+  z-index: 3;
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 70px 30px;
+  padding: 30px 10px;
+  perspective: 1400px;
+}
+
+/* ============================================================
+   ENVELOPE
+   ============================================================ */
+.envelope {
+  position: relative;
+  width: 320px;
+  height: 220px;
+  margin: 0 auto;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(50px) rotate(var(--rot, 0deg));
+  animation: dropIn 1s cubic-bezier(.2,.7,.25,1) forwards;
+  transition: transform 0.55s cubic-bezier(.2,.7,.25,1), filter 0.5s ease;
+  filter: drop-shadow(0 14px 22px rgba(0,0,0,0.55));
+  transform-style: preserve-3d;
+}
+
+.envelope:hover {
+  transform: translateY(-12px) rotate(var(--rot, 0deg)) scale(1.025);
+  filter: drop-shadow(0 24px 36px rgba(0,0,0,0.72));
+}
+
+/* Envelope body */
+.envelope-body {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, var(--cream) 0%, var(--cream-shadow) 100%);
+  box-shadow:
+    inset 0 0 40px rgba(120, 70, 30, 0.18),
+    inset 0 -3px 6px rgba(70, 30, 15, 0.22);
+}
+
+/* Paper texture on envelope */
+.envelope-body::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.28 0 0 0 0 0.14 0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+}
+
+/* Inner V — hint of envelope back seams */
+.envelope-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, transparent 49.5%, rgba(80,40,20,0.10) 50%, transparent 50.5%) bottom left / 50% 60% no-repeat,
+    linear-gradient(45deg,  transparent 49.5%, rgba(80,40,20,0.10) 50%, transparent 50.5%) bottom right / 50% 60% no-repeat;
+  pointer-events: none;
+}
+
+/* Top flap */
+.envelope-flap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 55%;
+  background: linear-gradient(180deg, var(--cream-light) 0%, var(--cream) 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition: transform 0.85s cubic-bezier(.55,.05,.25,1);
+  z-index: 3;
+}
+
+.envelope-flap::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.28 0 0 0 0 0.14 0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+/* Shadow cast by the flap onto the bottom of the envelope */
+.envelope-flap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 60%, rgba(70, 30, 15, 0.18) 95%, rgba(70, 30, 15, 0.3) 100%);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.envelope.opened .envelope-flap {
+  transform: rotateX(-175deg);
+  box-shadow: 0 -10px 20px rgba(0,0,0,0.25);
+}
+
+/* Wax seal */
+.seal {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(0deg);
+  background:
+    radial-gradient(circle at 32% 28%, var(--wax-light) 0%, var(--wax) 42%, var(--wax-dark) 100%);
+  box-shadow:
+    inset -4px -5px 10px rgba(0,0,0,0.45),
+    inset 4px 4px 8px rgba(255,170,160,0.28),
+    0 5px 10px rgba(0,0,0,0.5),
+    0 2px 3px rgba(80,10,15,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  transition: transform 0.4s ease;
+}
+
+/* Irregular wax edges */
+.seal::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 18% 50%, var(--wax-dark) 0%, var(--wax-dark) 8%, transparent 9%),
+    radial-gradient(circle at 82% 30%, var(--wax-dark) 0%, var(--wax-dark) 7%, transparent 8%),
+    radial-gradient(circle at 50% 88%, var(--wax-dark) 0%, var(--wax-dark) 7%, transparent 8%),
+    radial-gradient(circle at 92% 70%, var(--wax-dark) 0%, var(--wax-dark) 5%, transparent 6%),
+    radial-gradient(circle at 8% 18%, var(--wax-dark) 0%, var(--wax-dark) 5%, transparent 6%);
+  filter: blur(1px);
+  opacity: 0.85;
+  z-index: -1;
+}
+
+/* Impressed V & A monogram */
+.seal-monogram {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 500;
+  color: rgba(35, 4, 10, 0.85);
+  font-size: 18px;
+  letter-spacing: -1px;
+  text-shadow: 1px 1px 0 rgba(255, 200, 180, 0.18);
+  line-height: 1;
+  user-select: none;
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.seal-monogram .amp {
+  font-size: 0.65em;
+  vertical-align: 0.18em;
+  margin: 0 1px;
+  opacity: 0.75;
+}
+
+/* "Open when..." label */
+.label {
+  position: absolute;
+  bottom: 18px;
+  left: 0; right: 0;
+  text-align: center;
+  font-family: 'Caveat', cursive;
+  color: var(--ink);
+  z-index: 4;
+  pointer-events: none;
+}
+
+.label-small {
+  font-size: 15px;
+  opacity: 0.62;
+  font-style: italic;
+  display: block;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+
+.label-main {
+  font-size: 22px;
+  font-weight: 600;
+  display: block;
+  margin-top: 0;
+  color: var(--ink);
+  line-height: 1.1;
+}
+
+/* Opened state — seal breaks off */
+.envelope.opened .seal {
+  animation: sealBreak 0.7s cubic-bezier(.4,1.6,.5,1) forwards;
+}
+
+/* ============================================================
+   MODAL / LETTER
+   ============================================================ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 4, 8, 0);
+  z-index: 100;
+  display: none;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 50px 20px;
+  overflow-y: auto;
+  transition: background 0.55s ease;
+}
+
+.overlay.active {
+  display: flex;
+  background: rgba(15, 4, 8, 0.90);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.letter {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  background:
+    linear-gradient(180deg, var(--cream-light) 0%, var(--cream) 100%);
+  padding: 80px 70px 60px;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  box-shadow:
+    0 40px 100px rgba(0,0,0,0.75),
+    0 12px 30px rgba(0,0,0,0.5),
+    inset 0 0 120px rgba(120, 70, 30, 0.1);
+  transform: scale(0.6) rotate(-3deg) translateY(40px);
+  opacity: 0;
+  transition: transform 0.85s cubic-bezier(.2,.7,.25,1), opacity 0.6s ease;
+}
+
+.overlay.active .letter {
+  transform: scale(1) rotate(0) translateY(0);
+  opacity: 1;
+}
+
+/* Paper texture on the letter */
+.letter::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/><feColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.28 0 0 0 0 0.14 0 0 0 0.3 0'/></filter><rect width='100%' height='100%' filter='url(%23p)'/></svg>");
+  opacity: 0.45;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Fold lines (letter was folded in thirds) + edge vignette */
+.letter::after {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, transparent 32%, rgba(100,60,30,0.10) 33%, transparent 34%),
+    linear-gradient(180deg, transparent 65%, rgba(100,60,30,0.10) 66%, transparent 67%);
+  box-shadow: inset 0 0 60px rgba(100, 50, 20, 0.18);
+  pointer-events: none;
+}
+
+.letter-close {
+  position: absolute;
+  top: 18px; right: 22px;
+  background: none;
+  border: none;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.25s, transform 0.3s;
+  z-index: 10;
+  line-height: 1;
+  padding: 4px 10px;
+}
+
+.letter-close:hover {
+  opacity: 1;
+  transform: rotate(90deg);
+}
+
+.letter-header {
+  text-align: center;
+  margin-bottom: 38px;
+  position: relative;
+  z-index: 2;
+}
+
+.letter-date {
+  font-family: 'Caveat', cursive;
+  color: var(--ink-soft);
+  font-size: 19px;
+  opacity: 0.65;
+  letter-spacing: 0.4px;
+}
+
+.letter-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--ink);
+  font-size: 36px;
+  margin-top: 10px;
+  letter-spacing: 0.3px;
+  line-height: 1.15;
+}
+
+.letter-title::after {
+  content: '· ✦ ·';
+  display: block;
+  font-size: 12px;
+  color: var(--wax);
+  margin-top: 18px;
+  opacity: 0.65;
+  letter-spacing: 6px;
+}
+
+.letter-greeting {
+  font-family: 'Caveat', cursive;
+  font-size: 30px;
+  color: var(--wax-dark);
+  margin-bottom: 22px;
+  position: relative;
+  z-index: 2;
+}
+
+.letter-body {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 19px;
+  line-height: 1.75;
+  color: var(--ink);
+  position: relative;
+  z-index: 2;
+}
+
+.letter-body p { margin-bottom: 18px; }
+.letter-body em {
+  color: var(--wax-dark);
+  font-style: italic;
+}
+
+/* Place for photo/gif */
+.letter-photo {
+  margin: 35px auto;
+  width: 240px;
+  height: 240px;
+  background:
+    repeating-linear-gradient(45deg, rgba(110, 60, 40, 0.06) 0px, rgba(110, 60, 40, 0.06) 12px, transparent 12px, transparent 24px),
+    var(--cream-shadow);
+  border: 1px solid rgba(100, 60, 40, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  box-shadow:
+    0 10px 24px rgba(0,0,0,0.18),
+    inset 0 0 22px rgba(100, 60, 30, 0.12);
+  transform: rotate(-2deg);
+  overflow: hidden;
+}
+
+.letter-photo span {
+  font-family: 'Caveat', cursive;
+  color: var(--ink-soft);
+  opacity: 0.55;
+  font-size: 17px;
+  text-align: center;
+  padding: 0 22px;
+  line-height: 1.4;
+}
+
+.letter-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Sticker-style gif: drop the polaroid frame, let it float on the paper */
+.letter-photo.has-gif {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transform: rotate(0);
+  width: 280px;
+  height: 280px;
+  overflow: visible;
+  filter: drop-shadow(0 6px 12px rgba(60, 20, 10, 0.25));
+}
+
+.letter-photo.has-gif img {
+  object-fit: contain;
+}
+
+.letter-signature {
+  text-align: right;
+  margin-top: 36px;
+  position: relative;
+  z-index: 2;
+}
+
+.letter-signature .yours {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: 19px;
+  display: block;
+}
+
+.letter-signature .name {
+  font-family: 'Caveat', cursive;
+  font-size: 56px;
+  color: var(--wax-dark);
+  margin-top: -8px;
+  display: block;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.letter-signature .name::after {
+  content: '';
+  display: block;
+  width: 90px;
+  height: 1px;
+  background: var(--wax-dark);
+  margin-left: auto;
+  margin-top: 4px;
+  opacity: 0.35;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  margin-top: 100px;
+  padding: 24px;
+  font-family: 'Caveat', cursive;
+  color: var(--cream);
+  opacity: 0.45;
+  font-size: 20px;
+}
+
+.footer::before {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 1px;
+  background: var(--gold);
+  margin: 0 auto 20px;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@keyframes dropIn {
+  0%   { opacity: 0; transform: translateY(50px) rotate(var(--rot, 0deg)) scale(0.94); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) rotate(var(--rot, 0deg)) scale(1); }
+}
+
+@keyframes sealBreak {
+  0%   { transform: translate(-50%, -50%) scale(1) rotate(0deg); opacity: 1; }
+  30%  { transform: translate(-50%, -50%) scale(1.18) rotate(-4deg); }
+  60%  { transform: translate(-58%, -42%) scale(0.95) rotate(14deg); opacity: 0.85; }
+  100% { transform: translate(-72%, 30%) scale(0.8) rotate(38deg); opacity: 0; }
+}
+
+@keyframes envelopeShake {
+  0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+  25%      { transform: translateY(0) rotate(calc(var(--rot, 0deg) - 1.2deg)); }
+  75%      { transform: translateY(0) rotate(calc(var(--rot, 0deg) + 1.2deg)); }
+}
+
+.envelope.opened { animation: envelopeShake 0.35s ease-in-out; }
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  body { padding: 40px 14px 70px; }
+  .desk { gap: 50px 16px; padding: 20px 6px; }
+  .envelope { width: 290px; height: 200px; }
+  .letter { padding: 60px 36px 44px; margin-top: 10px; }
+  .letter-title { font-size: 28px; }
+  .letter-greeting { font-size: 26px; }
+  .letter-body { font-size: 17px; line-height: 1.7; }
+  .letter-photo { width: 200px; height: 200px; }
+  .letter-signature .name { font-size: 46px; }
+  .header { margin-bottom: 50px; }
+  .header .sub { font-size: 21px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER — edit the title if you want
+     ============================================================ -->
+<header class="header">
+  <div class="ornament">· LETTERS ·</div>
+  <h1>For you, my <span class="name">Aya</span></h1>
+  <div class="sub">
+    <span class="divider"></span>open when you need it<span class="divider"></span>
+  </div>
+</header>
+
+<!-- Desk with envelopes (generated by JS) -->
+<main class="desk" id="desk"></main>
+
+<footer class="footer">yours, always — V.</footer>
+
+<!-- ============================================================
+     MODAL — the letter unfolds here
+     ============================================================ -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-hidden="true">
+  <article class="letter" id="letter">
+    <button class="letter-close" id="closeBtn" aria-label="close letter">&times;</button>
+
+    <div class="letter-header">
+      <div class="letter-date" id="letterDate">to your heart, anytime</div>
+      <h2 class="letter-title" id="letterTitle"></h2>
+    </div>
+
+    <div class="letter-greeting">My beloved Aya,</div>
+    <div class="letter-body" id="letterBody"></div>
+
+    <!-- ============================================================
+         PLACE FOR PHOTO / GIF
+         To attach an image to a specific letter, set the `photo`
+         property in the `letters` array below in the JS, e.g.
+            photo: "photos/our-morning.jpg"
+         ============================================================ -->
+    <div class="letter-photo" id="letterPhoto">
+      <span>· photo or gif goes here ·</span>
+    </div>
+
+    <div class="letter-signature">
+      <span class="yours">yours forever,</span>
+      <span class="name">Val</span>
+    </div>
+  </article>
+</div>
+
+<script>
+/* ============================================================
+   LETTERS — EDIT TEXTS AND PHOTOS HERE
+   ============================================================
+   - label : what's written on the envelope (after "Open when")
+   - title : heading inside the opened letter
+   - body  : letter body (you can use <p>, <em> etc.)
+   - photo : path to image/gif, or null for placeholder
+             e.g.  photo: "photos/our-morning.jpg"
+             or    photo: "https://media.tenor.com/.../hug.gif"
+   ============================================================ */
+const letters = [
+  {
+    label: "you're sad",
+    title: "When you're sad",
+    body: `
+      <p>Aya, if tears are falling right now — I need you to know one thing: <em>you are not alone in this</em>. Even when I'm not beside you, my heart is. Always.</p>
+      <p>Sadness is just love with nowhere to go. So I'm leaving mine here — so you have somewhere to send it back.</p>
+      <p>Breathe deeply. I'm here. And I will be.</p>
+    `,
+    photo: "Cat%20Love%20Sticker%20by%20MYAOWL.gif"
+  },
+  {
+    label: "you miss me",
+    title: "When you miss me",
+    body: `
+      <p>If you miss me — know that <em>I miss you too</em>. Constantly. Morning, evening, between the sentences I write to someone else.</p>
+      <p>Imagine I'm standing behind you, arms around your waist, my chin on your shoulder. Close your eyes. Feel it.</p>
+      <p>The distance between us is just a number. You are <em>home</em>, wherever I am.</p>
+    `,
+    photo: "Cat%20Love%20Sticker%20by%20MYAOWL-2.gif"
+  },
+  {
+    label: "you're bored",
+    title: "When you're bored",
+    body: `
+      <p>Bored? Good. That means you have a moment for a small adventure.</p>
+      <p>Suggestions from me: <em>cook something you've never tried. Dance in the kitchen. Send me three words and nothing more.</em></p>
+      <p>Or just sit with this photo and imagine what we'll do together when we see each other again. I already have a list.</p>
+    `,
+    photo: "Cat%20Sticker%20by%20MYAOWL.gif"
+  },
+  {
+    label: "you're having a bad day",
+    title: "When you're having a bad day",
+    body: `
+      <p>Bad days are like storms — loud, wet, unfair. But they pass. They always pass.</p>
+      <p>You don't have to be strong. You don't have to smile. You're allowed to be tired, angry, broken. <em>I love you in every state.</em></p>
+      <p>Shower. Water. Something warm. And remember — tomorrow is a new page, and I'll write it with you.</p>
+    `,
+    photo: "Cat%20Love%20Sticker%20by%20MYAOWL-3.gif"
+  },
+  {
+    label: "you're angry with me",
+    title: "When you're angry with me",
+    body: `
+      <p>Did I deserve it? Probably yes. And I'm sorry — honestly, not just out of politeness.</p>
+      <p>Be angry. You have every right. But please — <em>don't run</em>. Tell me what I did wrong, and I'll fix it. Even if it takes a lifetime.</p>
+      <p>I love you even when you don't love me back. That's the most honest version of love I know.</p>
+    `,
+    photo: "Cat%20Sticker%20by%20MYAOWL-2.gif"
+  },
+  {
+    label: "you can't sleep",
+    title: "When you can't sleep",
+    body: `
+      <p>3 a.m.? Say hello to the dark for me. I've been there often — thinking about you.</p>
+      <p>Breathe deeply. Imagine me drawing small circles on your back with my finger, whispering that everything is okay.</p>
+      <p>Sleep will come. It always comes. And I'll be in your dreams, if you let me in. <em>Goodnight, my love.</em></p>
+    `,
+    photo: "Cat%20Love%20Sticker%20by%20MYAOWL-4.gif"
+  }
+];
+
+/* ============================================================
+   ENVELOPE GENERATION
+   ============================================================ */
+const desk = document.getElementById('desk');
+// gently scattered rotations — like letters on a table
+const rotations = [-5, 4, -3, 6, -4, 3, -6, 5, -2, 4];
+
+letters.forEach((item, i) => {
+  const env = document.createElement('div');
+  env.className = 'envelope';
+  env.style.setProperty('--rot', `${rotations[i % rotations.length]}deg`);
+  env.style.animationDelay = `${0.25 + i * 0.13}s`;
+  env.setAttribute('role', 'button');
+  env.setAttribute('tabindex', '0');
+  env.setAttribute('aria-label', `Open letter: ${item.label}`);
+
+  env.innerHTML = `
+    <div class="envelope-body"></div>
+    <div class="envelope-flap"></div>
+    <div class="seal">
+      <span class="seal-monogram">V<span class="amp">&amp;</span>A</span>
+    </div>
+    <div class="label">
+      <span class="label-small">Open when</span>
+      <span class="label-main">${item.label}</span>
+    </div>
+  `;
+
+  const open = () => openLetter(i, env);
+  env.addEventListener('click', open);
+  env.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+  });
+
+  desk.appendChild(env);
+});
+
+/* ============================================================
+   MODAL LOGIC
+   ============================================================ */
+const overlay      = document.getElementById('overlay');
+const letterTitle  = document.getElementById('letterTitle');
+const letterBody   = document.getElementById('letterBody');
+const letterPhoto  = document.getElementById('letterPhoto');
+const closeBtn     = document.getElementById('closeBtn');
+
+let openTimeout = null;
+let resetTimeout = null;
+
+function openLetter(idx, envEl) {
+  const data = letters[idx];
+
+  // seal breaks + envelope shakes
+  envEl.classList.add('opened');
+
+  // after a short moment, the letter appears
+  clearTimeout(openTimeout);
+  openTimeout = setTimeout(() => {
+    letterTitle.textContent = data.title;
+    letterBody.innerHTML = data.body;
+
+    if (data.photo) {
+      letterPhoto.innerHTML = `<img src="${data.photo}" alt="">`;
+      letterPhoto.classList.add('has-gif');
+    } else {
+      letterPhoto.innerHTML = `<span>· photo or gif goes here ·</span>`;
+      letterPhoto.classList.remove('has-gif');
+    }
+
+    overlay.classList.add('active');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }, 520);
+
+  // after closing, envelope returns to sealed state
+  clearTimeout(resetTimeout);
+  resetTimeout = setTimeout(() => {
+    envEl.classList.remove('opened');
+  }, 1800);
+}
+
+function closeLetter() {
+  overlay.classList.remove('active');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+closeBtn.addEventListener('click', closeLetter);
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) closeLetter();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeLetter();
+});
+</script>
+</body>
+</html>

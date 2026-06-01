@@ -49,8 +49,9 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.06 0 0 0 0 0.02 0 0 0 0 0.03 0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.55;
-  mix-blend-mode: overlay;
+  opacity: 0.5;
+  /* no mix-blend-mode: a full-screen blended layer forces the whole
+     viewport to re-composite every frame — main source of the lag */
   pointer-events: none;
   z-index: 1;
 }
@@ -88,7 +89,10 @@ body::after {
   bottom: -50px;
   opacity: 0;
   animation: heartFloat linear infinite;
+  will-change: transform, opacity; /* keep them on their own GPU layer */
 }
+/* stop the drifting hearts while a letter is open (they're behind it anyway) */
+body.modal-open .heart-floating { animation-play-state: paused; }
 
 @keyframes heartFloat {
   0%   { transform: translateY(0) translateX(0) rotate(-6deg); opacity: 0; }
@@ -366,19 +370,23 @@ body::after {
   inset: 0;
   background: rgba(15, 4, 8, 0);
   z-index: 100;
-  display: none;
+  display: flex;                 /* always in the render tree so the letter can animate */
   align-items: flex-start;
   justify-content: center;
   padding: 50px 20px;
   overflow-y: auto;
-  transition: background 0.55s ease;
+  visibility: hidden;            /* hidden + click-through until opened */
+  pointer-events: none;
+  transition: background 0.55s ease, visibility 0s linear 0.65s;
 }
 
 .overlay.active {
-  display: flex;
-  background: rgba(15, 4, 8, 0.90);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  visibility: visible;
+  pointer-events: auto;
+  /* near-opaque backdrop instead of backdrop-filter blur (which would re-blur
+     the animating hearts behind it every frame while reading a letter) */
+  background: rgba(15, 4, 8, 0.95);
+  transition: background 0.55s ease, visibility 0s;
 }
 
 .letter {
@@ -394,13 +402,14 @@ body::after {
     0 40px 100px rgba(0,0,0,0.75),
     0 12px 30px rgba(0,0,0,0.5),
     inset 0 0 120px rgba(120, 70, 30, 0.1);
-  transform: scale(0.6) rotate(-3deg) translateY(40px);
+  transform: translateY(70px) scale(0.96) rotate(-2deg);
   opacity: 0;
-  transition: transform 0.85s cubic-bezier(.2,.7,.25,1), opacity 0.6s ease;
+  transform-origin: center 40%;
+  transition: transform 0.75s cubic-bezier(.2, 0.8, 0.25, 1), opacity 0.55s ease;
 }
 
 .overlay.active .letter {
-  transform: scale(1) rotate(0) translateY(0);
+  transform: translateY(0) scale(1) rotate(0);
   opacity: 1;
 }
 
@@ -826,16 +835,86 @@ body::after {
   will-change: transform;
   display: none;
 }
+#customCursor .cur-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+/* default cursor showing; "open" cursor hidden until over an openable thing */
+#customCursor .cur-open { display: none; }
+#customCursor.is-open .cur-default { display: none; }
+#customCursor.is-open .cur-open { display: block; }
 /* only on devices with a real pointer (skip touch screens) */
 @media (hover: hover) and (pointer: fine) {
   #customCursor { display: block; }
+}
+
+/* ============================================================
+   SOUND TOGGLE — bottom-right, off by default
+   ============================================================ */
+.sound-toggle {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 9000;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(154, 122, 60, 0.55);
+  background: rgba(30, 8, 14, 0.8);
+  color: var(--cream-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+.sound-toggle:hover { transform: translateY(-2px) scale(1.05); border-color: var(--wax-light); }
+.sound-toggle:active { transform: translateY(0) scale(0.97); }
+.sound-toggle svg { width: 22px; height: 22px; display: block; }
+.sound-toggle .ic-on { display: none; }
+.sound-toggle.is-on { color: var(--wax-light); border-color: rgba(178, 40, 56, 0.7); }
+.sound-toggle.is-on .ic-off { display: none; }
+.sound-toggle.is-on .ic-on  { display: block; }
+/* soft pulse while sound is playing */
+.sound-toggle.is-on { animation: soundPulse 2.6s ease-out infinite; }
+@keyframes soundPulse {
+  0%   { box-shadow: 0 6px 18px rgba(0,0,0,0.45), 0 0 0 0 rgba(178,40,56,0.35); }
+  70%  { box-shadow: 0 6px 18px rgba(0,0,0,0.45), 0 0 0 11px rgba(178,40,56,0); }
+  100% { box-shadow: 0 6px 18px rgba(0,0,0,0.45), 0 0 0 0 rgba(178,40,56,0); }
+}
+@media (max-width: 600px) {
+  .sound-toggle { right: 16px; bottom: 16px; width: 42px; height: 42px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sound-toggle.is-on { animation: none; }
 }
 </style>
 </head>
 <body>
 
-<!-- Animated GIF cursor (follows the mouse via JS) -->
-<img id="customCursor" src="cursor.gif" alt="" aria-hidden="true" draggable="false">
+<!-- Animated GIF cursor (follows the mouse via JS); swaps to the "open" gif over envelopes -->
+<div id="customCursor" aria-hidden="true">
+  <img class="cur-img cur-default" src="cursor.gif" alt="" draggable="false">
+  <img class="cur-img cur-open" src="opencursor.gif" alt="" draggable="false">
+</div>
+
+<!-- Sound on/off (music + envelope sounds) — off by default -->
+<button id="soundToggle" class="sound-toggle" type="button" aria-pressed="false" aria-label="Turn background music on or off" title="Music on / off">
+  <svg class="ic ic-off" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/>
+    <path d="M16 9.5l5 5M21 9.5l-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </svg>
+  <svg class="ic ic-on" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3 9v6h4l5 4V5L7 9H3z" fill="currentColor"/>
+    <path d="M16 8.8a4.5 4.5 0 0 1 0 6.4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+    <path d="M18.7 6.2a8 8 0 0 1 0 11.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+  </svg>
+</button>
 
 <!-- Hearts background layer (populated by JS) -->
 <div class="hearts-bg" id="heartsBg"></div>
@@ -1206,6 +1285,7 @@ function openLetter(idx, envEl) {
 
   // seal breaks + envelope shakes
   envEl.classList.add('opened');
+  if (window.AyaSound) window.AyaSound.playOpen();
 
   // after a short moment, the letter appears
   clearTimeout(openTimeout);
@@ -1226,6 +1306,7 @@ function openLetter(idx, envEl) {
     overlay.classList.add('active');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
+    document.body.classList.add('modal-open'); // pauses background hearts
   }, 520);
 
   // after closing, envelope returns to sealed state
@@ -1239,6 +1320,7 @@ function closeLetter() {
   overlay.classList.remove('active');
   overlay.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
+  document.body.classList.remove('modal-open'); // resume background hearts
 }
 
 closeBtn.addEventListener('click', closeLetter);
@@ -1383,16 +1465,218 @@ for (let i = 0; i < 8; i++) {
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
 
   const off = 21; // half of the 42px gif, so it's centred on the pointer
-  let shown = false;
+  let shown = false, px = 0, py = 0, queued = false;
 
-  window.addEventListener('mousemove', (e) => {
-    cc.style.transform =
-      'translate3d(' + (e.clientX - off) + 'px,' + (e.clientY - off) + 'px,0)';
+  function place() {
+    queued = false;
+    cc.style.transform = 'translate3d(' + (px - off) + 'px,' + (py - off) + 'px,0)';
     if (!shown) { cc.style.opacity = '1'; shown = true; }
+  }
+  // store the latest position and update at most once per animation frame
+  window.addEventListener('mousemove', (e) => {
+    px = e.clientX; py = e.clientY;
+    if (!queued) { queued = true; requestAnimationFrame(place); }
   }, { passive: true });
 
   document.addEventListener('mouseleave', () => { cc.style.opacity = '0'; });
   document.addEventListener('mouseenter', () => { cc.style.opacity = '1'; });
+
+  // swap to the "open" gif whenever the pointer is over something openable (an envelope)
+  document.addEventListener('mouseover', (e) => {
+    const openable = e.target.closest && e.target.closest('.envelope');
+    cc.classList.toggle('is-open', !!openable);
+  });
+})();
+</script>
+
+<script>
+/* ============================================================
+   SOUND — gentle ambient piano + wax-seal/paper SFX
+   All synthesized with the Web Audio API (no audio files).
+   Off by default; the choice is remembered in localStorage.
+   ============================================================ */
+(function () {
+  const KEY = 'aya-sound-on';
+  const btn = document.getElementById('soundToggle');
+  if (!btn) return;
+
+  let ctx, master, musicGain, sfxGain, reverb;
+  let on = false;
+  let schedTimer = null;
+  let nextTime = 0, idx = 0;
+
+  const CHORD_DUR = 4.2;   // seconds each chord lingers
+  const LOOKAHEAD = 2.8;   // schedule notes this far ahead
+
+  // ---- note frequencies (Hz) ----
+  const N = {
+    C3:130.81, E3:164.81, F3:174.61, G3:196.00, A3:220.00, B3:246.94,
+    C4:261.63, D4:293.66, E4:329.63, F4:349.23, G4:392.00, A4:440.00,
+    C5:523.25
+  };
+  // I – vi – IV – V in C, voiced softly low-to-high
+  const PROG = [
+    [N.C3, N.E4, N.G4, N.C5],
+    [N.A3, N.C4, N.E4, N.A4],
+    [N.F3, N.A3, N.C4, N.F4],
+    [N.G3, N.B3, N.D4, N.G4]
+  ];
+
+  function makeImpulse(seconds, decay) {
+    const rate = ctx.sampleRate;
+    const len = Math.max(1, Math.floor(rate * seconds));
+    const buf = ctx.createBuffer(2, len, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+      }
+    }
+    return buf;
+  }
+
+  function ensureCtx() {
+    if (ctx) return;
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+    master = ctx.createGain();
+    master.gain.value = 1.0;       // always on; the toggle controls music only
+    master.connect(ctx.destination);
+
+    reverb = ctx.createConvolver();
+    reverb.buffer = makeImpulse(2.6, 2.2);
+    const revGain = ctx.createGain();
+    revGain.gain.value = 0.45;
+    reverb.connect(revGain).connect(master);
+
+    musicGain = ctx.createGain();
+    musicGain.gain.value = 0;      // ambient music starts muted (toggle fades it in)
+    musicGain.connect(master);
+    musicGain.connect(reverb);
+
+    sfxGain = ctx.createGain();
+    sfxGain.gain.value = 0.8;      // envelope sounds: always audible, toggle-independent
+    sfxGain.connect(master);
+    sfxGain.connect(reverb);
+  }
+
+  // ---- one gentle, piano-ish note ----
+  function note(freq, time, dur, level) {
+    const o1 = ctx.createOscillator(); o1.type = 'triangle'; o1.frequency.value = freq;
+    const o2 = ctx.createOscillator(); o2.type = 'sine';     o2.frequency.value = freq * 2;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+    const harm = ctx.createGain(); harm.gain.value = 0.28; // 2nd partial, quieter
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(level, time + 0.012); // soft attack
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);  // long decay
+
+    o1.connect(lp);
+    o2.connect(harm).connect(lp);
+    lp.connect(g).connect(musicGain);
+    o1.start(time); o2.start(time);
+    o1.stop(time + dur + 0.1); o2.stop(time + dur + 0.1);
+  }
+
+  function scheduleChord(t) {
+    const chord = PROG[idx % PROG.length];
+    note(chord[0], t, CHORD_DUR * 1.05, 0.12);              // soft root
+    for (let i = 1; i < chord.length; i++) {                // arpeggiate the top
+      const at = t + (i - 0.5) * (CHORD_DUR / chord.length);
+      note(chord[i], at, CHORD_DUR * 0.9, 0.085);
+    }
+    idx++;
+  }
+
+  function scheduler() {
+    if (!on || !ctx) return;
+    while (nextTime < ctx.currentTime + LOOKAHEAD) {
+      scheduleChord(nextTime);
+      nextTime += CHORD_DUR;
+    }
+  }
+
+  // ---- short filtered-noise burst (used for the SFX layers) ----
+  function noise(time, dur, type, freq, q, level) {
+    const len = Math.floor(ctx.sampleRate * dur);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; if (q) f.Q.value = q;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, time);
+    g.gain.exponentialRampToValueAtTime(level, time + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+    src.connect(f).connect(g).connect(sfxGain);
+    src.start(time); src.stop(time + dur + 0.05);
+  }
+
+  // ---- paper crinkling / scrambling open (no wax crack) ----
+  function playOpen() {
+    ensureCtx();                                 // plays even if music is off
+    if (ctx.state === 'suspended') ctx.resume(); // opening a letter is a user gesture
+    const t0 = ctx.currentTime;
+    const total = 0.65;   // how long the crinkle lasts
+    const grains = 24;    // many little irregular crackles = the paper "scramble"
+
+    for (let i = 0; i < grains; i++) {
+      // random, front-loaded timing so it crackles most as the paper first opens
+      const frac = Math.pow(Math.random(), 1.4);
+      const at   = t0 + frac * total;
+      const dur  = 0.008 + Math.random() * 0.03;     // tiny crackles
+      const freq = 1700 + Math.random() * 2800;      // crisp, papery highs
+      const level = 0.09 + Math.random() * 0.20;
+      // mix highpass + bandpass grains for a dry, crumpled texture
+      if (Math.random() < 0.5) noise(at, dur, 'highpass', freq, 0,   level);
+      else                     noise(at, dur, 'bandpass', freq, 0.8, level);
+    }
+    // soft, brief "slide" underneath so it reads as paper rather than static
+    noise(t0 + 0.02, 0.34, 'bandpass', 1400, 0.6, 0.06);
+  }
+
+  // ---- on / off ----
+  function setOn(state) {
+    on = state;
+    btn.classList.toggle('is-on', on);
+    btn.setAttribute('aria-pressed', String(on));
+    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (e) {}
+
+    if (on) {
+      ensureCtx();
+      if (ctx.state === 'suspended') ctx.resume();
+      musicGain.gain.cancelScheduledValues(ctx.currentTime);
+      musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime);
+      musicGain.gain.linearRampToValueAtTime(0.20, ctx.currentTime + 0.8); // fade music in
+      nextTime = ctx.currentTime + 0.15;
+      if (!schedTimer) schedTimer = setInterval(scheduler, 300);
+      scheduler();
+    } else if (ctx) {
+      musicGain.gain.cancelScheduledValues(ctx.currentTime);
+      musicGain.gain.setValueAtTime(musicGain.gain.value, ctx.currentTime);
+      musicGain.gain.linearRampToValueAtTime(0.0, ctx.currentTime + 0.5); // fade music out
+    }
+  }
+
+  btn.addEventListener('click', () => setOn(!on));
+
+  // let the letter logic play the open SFX
+  window.AyaSound = { playOpen: playOpen, isOn: function () { return on; } };
+
+  // remember the last choice; if it was on, resume on the first interaction
+  let stored = '0';
+  try { stored = localStorage.getItem(KEY) || '0'; } catch (e) {}
+  if (stored === '1') {
+    btn.classList.add('is-on');
+    btn.setAttribute('aria-pressed', 'true');
+    const boot = function () {
+      document.removeEventListener('pointerdown', boot);
+      document.removeEventListener('keydown', boot);
+      setOn(true);
+    };
+    document.addEventListener('pointerdown', boot, { once: true });
+    document.addEventListener('keydown', boot, { once: true });
+  }
 })();
 </script>
 </body>

@@ -5,7 +5,7 @@
    - title : heading inside the opened letter
    - body  : letter body (you can use <p>, <em> etc.)
    - photo : path to image/gif, or null for placeholder
-             e.g.  photo: "photos/our-morning.jpg"
+             e.g.  photo: "assets/our-morning.jpg"
              or    photo: "https://media.tenor.com/.../hug.gif"
    ============================================================ */
 const letters = [
@@ -44,7 +44,7 @@ const letters = [
         Listen; there's a hell<br>of a good universe next door; let's go.
       </blockquote>
     `,
-    photo: "Cat%20Sticker%20by%20MYAOWL.gif"
+    photo: "assets/Cat%20Sticker%20by%20MYAOWL.gif"
   },
   {
     label: "you're having a bad day",
@@ -222,7 +222,7 @@ const letters = [
         Done with the Chart!
       </blockquote>
     `,
-    photo: "Cat%20Sticker%20by%20MYAOWL-2.gif"
+    photo: "assets/Cat%20Sticker%20by%20MYAOWL-2.gif"
   },
   {
     label: "you remember our beginning",
@@ -239,7 +239,7 @@ const letters = [
         Till a' the seas gang dry.
       </blockquote>
     `,
-    photo: "Cat%20Love%20Sticker%20by%20MYAOWL-4.gif"
+    photo: "assets/Cat%20Love%20Sticker%20by%20MYAOWL-4.gif"
   }
 ];
 
